@@ -1,0 +1,64 @@
+
+INTERNAL MEMO
+TO   : All Regional Ops Managers
+FROM : Head of Operations
+DATE : Decmber 28, 2O17   <- note: O vs 0 OCR issue
+RE   : End-of-Year Ops Review & January Priorities
+
+---
+
+This memo covers outstanding issues from Q4 and sets priorities for Jan 2018.
+Plese acknowledge receipt by repling to this email.
+
+OUTSTANDING ISSUES:
+===================
+
+1. INVENTORY DISCREPANCIES
+   West warehouse: 142 units Staple unaccounted (item# OFF-ST-10000760)
+   South warehouse: Tables overstock -- 38 units beyond forecast (margin -ve)
+   Central: OK
+   East: Minor variance $1,200 -- within tolerance
+
+2. RETURNS PROCESSING BACKLOG
+   Current backlog: 89 returns unprocessed (vs SLA of 48hr)
+   Main categories: Furniture (51), Technology (23), Office Supplies (15)
+   Root cause: 2 staff on leave, temp cover not arranged
+   ACTION: Regional managers to provide 1 person each until cleared
+
+3. SHIPPING CARRIER ISSUE
+   FedEx contract expires Jan 31 2018
+   Renewal negotiations IN PROGRESS -- do not discuss externally
+   Backup carrier identified: UPS (rates 8% higher -- seeking approval)
+   Same-day carrier for NYC area: Deliv (pilot -- results mixed so far)
+
+4. SYSTEM OUTAGE LOG (Q4):
+   Dec 12 14:00-18:30 : South region order system DOWN (472 orders delayed)
+   Dec 23 09:00-09:45 : Payment gateway intermittent (12 failed transactions)
+   Nov 08 02:00-03:00 : Scheduled maintenance (all regions -- no impact)
+
+5. CUSTOMER ESCALATIONS (unresolved):
+   ESC-2017-0891 : Large furniture order dispute -- Corporate client -- West
+   ESC-2017-0934 : Repeated wrong item delivery -- Consumer -- South
+   ESC-2017-0971 : Billing error $3,400 overcharge -- Corporate -- East
+   [See CRM for full details -- do not discuss by email]
+
+UPCOMING JANUARY PRIORITIES:
+=============================
+Week 1 (Jan 1-5)  : Year-end stock count (ALL warehouses mandatory)
+Week 2 (Jan 8-12) : Carrier contract renewal decision needed
+Week 3 (Jan 15)   : Discount policy review meeting (Sales + Ops)
+Week 4 (Jan 22)   : Q1 demand forecast submission to procurement
+
+HR NOTE: 3 new hires starting Jan 8 (2 warehouse, 1 analytics).
+         Onboarding materials in Sharepoint -- link: [BROKEN LINK PLACEHOLDER]
+
+BUDGET REMINDER:
+Q1 ops budget NOT yet approved. Work within Q4 actuals until notified.
+Any spend >$5,000 requires SVP approval until budget confirmed.
+
+---
+CONFIDENTIAL -- INTERNAL USE ONLY
+Do not forward outside TechRetail Corp.
+If received in error please delete and notify sender.
+
+[AUTO-SIGNATURE FAILED -- CONTACT IT]

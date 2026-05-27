@@ -1,0 +1,105 @@
+
+CUSTOMER FEEDBACK COMPILATION
+Source: CRM export + manual transcription from call recordings
+Period: October -- December 2017
+Transcribed by: Support Team  (raw -- errors may exist)
+=========================================================
+
+ID: FB-001
+Customer  : Clair Gute     [possible correct spelling: Claire Gute]
+Segment   : Consumer
+Region    : South
+Date      : 10/14/2017
+Feedback  : "recieved my bookcase damaged. corners dented, one shelf cracked.
+             took 3 weeks with Second Clas shipping. want refund or replacement!!"
+Sentiment : NEGATIVE
+Product   : Bush Somerset Collection Bookcas   <- truncated
+Follow-up : Replacement shipped 10/18. Customer satisfied.
+---------------------------------------------------------
+
+ID: FB-002
+Custmer   : Darrin Van Huff          <- typo in transcription
+Region    : West
+Date      : Nov 3 '17
+Feedback  : Great service!! ordered Hon chairs for entire office. arrived on time
+            good quality price was resonable. Will order again definitely
+Segment   : Coporate                 <- typo
+Sentiment : POSITIV                  <- incomplete word
+Product   : Hon Deluxe Fabric Upholstered Stacking Chairs
+---------------------------------------------------------
+
+ID: FB-003
+Customer  : Sean O'Donnell
+Region    : Suth                     <- OCR error, should be South
+Date      : 11/17/2017
+Feedback  : "storage box completely wrong colour. ordered black got grey.
+             qty ordered 2 but received 1. VERY DISAPPOINTING. 3rd issue this yr"
+Issues    : Wrong item, wrong qty
+Sentiment : Negative
+Return    : YES   ref# RTN-2017-0443
+---------------------------------------------------------
+
+ID: FB-004
+Custoer   : Maris Freeman            <- garbled OCR
+Region    : East
+Dat       : 12 / 01 / 2017           <- inconsistent date format
+Feedback  : Phone call -- customer very happy with Logitech MK520 keyboard.
+            Best keyboard she has used. Recommended to 4 colleagues. No issues.
+Sentiment : Positive
+NPS Score : 9/10
+---------------------------------------------------------
+
+ID: FB-005
+Customer  : AARON HAWKINS
+Segment   : Home Office
+Region    : Centra                   <- OCR truncation
+Date      : 2017-12-22
+Feedback  : staples and paper arrived quickly but stapler itself was missing.
+            checked invoice -- was charged for it. pls credit or resend
+Missing   : Stapler
+Invoice#  : CA-2017-8819
+Status    : OPEN -- pending warehouse investigation
+---------------------------------------------------------
+
+ID: FB-006
+Customer  : Somebody McTest          <- TEST RECORD -- DELETE BEFORE PRODUCTION
+Region    : N/A
+Date      : 00/00/0000
+Feedback  : Lorem ipsum dolor sit amet, consectetur adipiscing elit.
+Sentiment : unknown
+Status    : TEST DATA -- IGNORE
+---------------------------------------------------------
+
+ID: FB-007
+Customer  : Heinrich Braun           <- NOTE: European customer, different system
+Region    : EMEA - Germany           <- NOT in Superstore dataset
+Date      : 12/05/2017
+Feedback  : Sehr gut! Schnelle Lieferung, Qualitat top.
+            [Translation needed -- auto-translate failed]
+Sentiment : Positive (inferred)
+Status    : Escalate to EU team for follow-up
+---------------------------------------------------------
+
+ID: FB-008
+Customer  : Priya Nair
+Region    : West
+Segment   : Corporate
+Date      : December 19, 2017        <- different date format again
+Feedback  : Bulk order of 200 binders arrived short by 23 units. Invoice correct
+            but physical count wrong. Warehouse error suspected.
+Invoice#  : CA-2017-9942
+Status    : Pending credit note
+NPS Score : 6
+---------------------------------------------------------
+
+ADDITIONAL NOTES (unverified, raw):
+  - Several customers complained abot holiday delays in South & Central
+  - Furniture returns up ~12% Q4 vs Q3 -- possible supplier quality issue
+  - Technology items lowest complaint rate (2.1%)
+  - One VIP Corporate customer West placed $45,000 order Dec 15 -- no issues
+  - EU feedback NOT in this file -- separate system
+  - TODO: NPS analysis by region and product category
+  - TODO: clean up TEST records before analysis
+
+[INCOMPLETE -- 340 remaining feedback records in CRM system]
+[LAST UPDATED: ???  -- timestamp missing from export]
