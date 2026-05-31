@@ -1,53 +1,133 @@
 # InsightForge — AI Business Intelligence Assistant
 
-> **What it covers:** LangChain, RAG, and Azure OpenAI basics.
+An AI-powered BI assistant for TechRetail Corporation. Ask any question in plain English — InsightForge routes it to the right engine, computes or retrieves the answer, and returns a response with sources cited.
 
 ---
 
-## What Is This Project?
+## What It Does
 
-Imagine you're a business analyst at **TechRetail Corporation**. Your boss drops a folder on your desk with:
-
-- A messy spreadsheet of 10,000 sales transactions
-- PDFs of annual reports and board meeting notes
-- Word documents with supplier contracts and meeting minutes
-- Text files with quarterly sales reports
-- JPEG charts from previous presentations
-
-Your boss says: **"I need answers. Which region is most profitable? What's hurting our margins? What do our customers say about shipping?"**
-
-Normally you'd spend days manually reading all those files. **InsightForge automates that.** You type a question in plain English, and the system:
-
-1. Reads and cleans all the messy data automatically
-2. Searches the right documents for relevant information
-3. Asks an AI (GPT via Azure) to synthesize an answer
-4. Shows you charts and a clean dashboard
+- **Structured questions** ("What is total profit by region?") → Pandas DataFrame Agent runs real Python code on 7,010 rows of cleaned sales data
+- **Document questions** ("What did the board discuss about Q4?") → RAG chain searches 407 indexed chunks from 14 business documents (TXT, DOCX, PDF)
+- A **keyword router** automatically decides which engine to use — no manual selection required
+- A **Streamlit UI** with live charts, sidebar metrics, and a chat interface
 
 ---
 
-## The Big Picture — How It All Connects
+## Project Structure
 
 ```
-Your Data Files (CSV, PDF, DOCX, TXT, JPG)
-        |
-        v
-[Phase 1] Data Cleaning (Pandas)
-        |
-        v
-[Phase 2] Document Loading & Chunking (LangChain)
-        |
-        v
-[Phase 3] Embeddings → FAISS Vector Store (RAG)
-        |
-        v
-[Phase 4] LangChain Agents (Pandas Agent + RAG Chain)
-        |
-        v
-[Phase 5] Azure OpenAI GPT answers your questions
-        |
-        v
-[Phase 6] Streamlit Web UI + Charts
-        |
-        v
-[Phase 7] Put it all together → Final Working System
+InsightForge/
+├── app.py                    ← Streamlit web app
+├── Dockerfile
+├── docker-compose.yml
+├── requirements.txt
+├── .env.example              ← copy to .env and fill in your Azure keys
+├── src/
+│   ├── data_cleaner.py       ← cleans superstore_messy.csv → superstore_clean.csv
+│   ├── document_loader.py    ← loads TXT/DOCX/PDF, chunks into 800-char pieces
+│   ├── rag_pipeline.py       ← Chroma vector store + RAG chain
+│   ├── agents.py             ← Pandas agent + keyword router + unified CLI
+│   └── visualizations.py    ← 5 chart functions + auto-insights
+├── data/                     ← raw + clean CSV, TXT, DOCX, PDF documents
+└── chroma_db/                ← Chroma vector store (built on first run, gitignored)
 ```
+
+---
+
+## Setup
+
+### 1. Clone and activate virtual environment
+
+```bash
+git clone <repo-url>
+cd InsightForge
+python -m venv ../venv
+source ../venv/bin/activate
+pip install -r requirements.txt
+```
+
+### 2. Configure `.env`
+
+Copy `.env.example` to `.env` (one level above `InsightForge/`, same level as `venv/`):
+
+```bash
+cp .env.example ../.env
+```
+
+Fill in your Azure OpenAI credentials:
+
+```
+AZURE_OPENAI_API_KEY=your_key_here
+AZURE_OPENAI_ENDPOINT=https://your-resource.openai.azure.com/
+AZURE_OPENAI_DEPLOYMENT=your_gpt_deployment_name
+AZURE_OPENAI_EMBEDDING_DEPLOYMENT=text-embedding-ada-002
+AZURE_OPENAI_API_VERSION=2024-02-01
+```
+
+---
+
+## Running the App
+
+### Option A — Streamlit (development)
+
+```bash
+source ../venv/bin/activate
+streamlit run app.py
+```
+
+Opens at `http://localhost:8501`. On first run, the app builds the Chroma index (~1–3 min). Subsequent runs load from disk instantly.
+
+### Option B — Docker
+
+```bash
+docker compose up --build
+```
+
+Opens at `http://localhost:8501`. The `chroma_db/` and `data/` directories are volume-mounted so the pre-built index is reused inside the container.
+
+### Option C — CLI only (no UI)
+
+```bash
+# Unified CLI (routes automatically)
+source ../venv/bin/activate
+python -m src.agents
+
+# RAG documents only
+python -m src.rag_pipeline
+```
+
+---
+
+## Sample Questions
+
+| Question | Route | Source |
+|---|---|---|
+| What is total revenue by region? | Pandas Agent | superstore_clean.csv |
+| Which sub-category has the worst profit margin? | Pandas Agent | superstore_clean.csv |
+| Compare Technology vs Furniture sales | Pandas Agent | superstore_clean.csv |
+| What did the board discuss about Q4 performance? | RAG | board_presentation_notes_Dec2017.pdf |
+| What are the main customer complaints about shipping? | RAG | customer_feedback_notes.txt |
+| Are there any supplier compliance issues? | RAG | supplier_contracts_summary.docx |
+
+---
+
+## Tech Stack
+
+| Component | Technology |
+|---|---|
+| LLM | Azure OpenAI GPT-4 |
+| Embeddings | Azure OpenAI Ada-002 (1536-dim) |
+| Vector store | Chroma (persisted to `chroma_db/`) |
+| Structured agent | LangChain Pandas DataFrame Agent |
+| Document loader | LangChain TextLoader / Docx2txtLoader / PyPDFLoader |
+| Web UI | Streamlit |
+| Data processing | Pandas |
+| Containerization | Docker + Docker Compose |
+
+---
+
+## Environment Notes
+
+- `.env` must live one level **above** `InsightForge/` (same level as `venv/`). All modules use `load_dotenv(find_dotenv())` to locate it.
+- `chroma_db/` is gitignored — build it locally once with `python -m src.rag_pipeline`, then volume-mount into Docker.
+- Python 3.11+ required.
