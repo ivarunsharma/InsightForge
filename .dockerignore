@@ -1,0 +1,32 @@
+# ── Secrets — never bake into image ──────────────────────────────────────────
+.env
+*.env
+.env.*
+
+# ── Generated / volume-mounted — rebuilt at runtime ──────────────────────────
+chroma_db/
+
+# ── Local Python environment — container uses its own ────────────────────────
+venv/
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.egg-info/
+.ipynb_checkpoints/
+
+# ── Dev / CI artefacts — not needed at runtime ───────────────────────────────
+.git/
+.gitignore
+.DS_Store
+notebooks/
+scripts/
+docs/
+TODO.md
+CLAUDE.md
+
+# ── IDE / editor configs ──────────────────────────────────────────────────────
+.vscode/
+.idea/
+*.swp

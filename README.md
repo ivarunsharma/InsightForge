@@ -8,6 +8,7 @@ An AI-powered BI assistant for TechRetail Corporation. Ask any question in plain
 
 - **Structured questions** ("What is total profit by region?") → Pandas DataFrame Agent runs real Python code on 7,010 rows of cleaned sales data
 - **Document questions** ("What did the board discuss about Q4?") → RAG chain searches 407 indexed chunks from 14 business documents (TXT, DOCX, PDF)
+- **Conversational follow-ups** work naturally — ask "What about the East?" after a prior question and the system understands the context
 - A **keyword router** automatically decides which engine to use — no manual selection required
 - A **Streamlit UI** with live charts, sidebar metrics, and a chat interface
 
@@ -25,8 +26,8 @@ InsightForge/
 ├── src/
 │   ├── data_cleaner.py       ← cleans superstore_messy.csv → superstore_clean.csv
 │   ├── document_loader.py    ← loads TXT/DOCX/PDF, chunks into 800-char pieces
-│   ├── rag_pipeline.py       ← Chroma vector store + RAG chain
-│   ├── agents.py             ← Pandas agent + keyword router + unified CLI
+│   ├── rag_pipeline.py       ← Chroma vector store + LCEL RAG chain
+│   ├── agents.py             ← Pandas agent + keyword router + conversation memory
 │   └── visualizations.py    ← 5 chart functions + auto-insights
 ├── data/                     ← raw + clean CSV, TXT, DOCX, PDF documents
 └── chroma_db/                ← Chroma vector store (built on first run, gitignored)

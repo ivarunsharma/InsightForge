@@ -2,27 +2,37 @@ import os
 from dotenv import load_dotenv, find_dotenv
 from langchain_openai import AzureChatOpenAI, AzureOpenAIEmbeddings
 from langchain_chroma import Chroma
-from langchain.chains import RetrievalQA
-from langchain.prompts import PromptTemplate
+from langchain_classic.chains.history_aware_retriever import create_history_aware_retriever
+from langchain_classic.chains.retrieval import create_retrieval_chain
+from langchain_classic.chains.combine_documents.stuff import create_stuff_documents_chain
+from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
+from langchain_core.messages import HumanMessage, AIMessage
 
 load_dotenv(find_dotenv(), override=True)
 
 CHROMA_DIR = os.path.join(os.path.dirname(__file__), "..", "chroma_db")
 
-SYSTEM_PROMPT = PromptTemplate(
-    input_variables=["context", "question"],
-    template="""You are a business intelligence assistant for TechRetail Corporation.
-Answer the question using ONLY the information in the context below.
-If the answer is not in the context, say "I don't have enough information in my documents to answer that."
-Always mention which document your answer comes from.
+CONTEXTUALIZE_Q_PROMPT = ChatPromptTemplate.from_messages([
+    ("system",
+     "Given a chat history and the latest user question which might reference "
+     "context in the chat history, formulate a standalone question which can be "
+     "understood without the chat history. Do NOT answer it, just reformulate "
+     "if needed and otherwise return it as is."),
+    MessagesPlaceholder("chat_history"),
+    ("human", "{input}"),
+])
 
-Context:
-{context}
-
-Question: {question}
-
-Answer:""",
-)
+QA_PROMPT = ChatPromptTemplate.from_messages([
+    ("system",
+     "You are a business intelligence assistant for TechRetail Corporation. "
+     "Answer the question using ONLY the information in the context below. "
+     "If the answer is not in the context, say "
+     "\"I don't have enough information in my documents to answer that.\" "
+     "Always mention which document your answer comes from.\n\n"
+     "Context:\n{context}"),
+    MessagesPlaceholder("chat_history"),
+    ("human", "{input}"),
+])
 
 
 def get_llm():
@@ -78,14 +88,13 @@ def load_vectorstore():
 
 
 def build_rag_chain(vectorstore):
+    llm = get_llm()
     retriever = vectorstore.as_retriever(search_kwargs={"k": 5})
-    return RetrievalQA.from_chain_type(
-        llm=get_llm(),
-        chain_type="stuff",
-        retriever=retriever,
-        return_source_documents=True,
-        chain_type_kwargs={"prompt": SYSTEM_PROMPT},
+    history_aware_retriever = create_history_aware_retriever(
+        llm, retriever, CONTEXTUALIZE_Q_PROMPT
     )
+    combine_docs_chain = create_stuff_documents_chain(llm, QA_PROMPT)
+    return create_retrieval_chain(history_aware_retriever, combine_docs_chain)
 
 
 def run_rag_cli():
@@ -99,16 +108,21 @@ def run_rag_cli():
         vs = load_vectorstore()
 
     chain = build_rag_chain(vs)
+    chat_history = []
     print("\nDocument Q&A ready. Type 'quit' to exit.\n")
 
     while True:
         question = input("Question: ").strip()
         if question.lower() == "quit":
             break
-        result = chain.invoke(question)
-        print(f"\nAnswer: {result['result']}")
-        sources = list({d.metadata.get("doc_name", "unknown") for d in result["source_documents"]})
+        result = chain.invoke({"input": question, "chat_history": chat_history})
+        answer_text = result["answer"]
+        sources = list({d.metadata.get("doc_name", "unknown") for d in result["context"]})
+        print(f"\nAnswer: {answer_text}")
         print(f"Sources: {', '.join(sources)}\n")
+        chat_history.append(HumanMessage(content=question))
+        chat_history.append(AIMessage(content=answer_text))
+        chat_history = chat_history[-10:]
 
 
 if __name__ == "__main__":

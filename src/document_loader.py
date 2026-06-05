@@ -1,6 +1,6 @@
 import os
 from langchain_community.document_loaders import TextLoader, Docx2txtLoader, PyPDFLoader
-from langchain.text_splitter import RecursiveCharacterTextSplitter
+from langchain_text_splitters import RecursiveCharacterTextSplitter
 
 DATA_DIR = os.path.join(os.path.dirname(__file__), "..", "data")
 

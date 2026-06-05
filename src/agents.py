@@ -1,5 +1,6 @@
 import pandas as pd
 from langchain_experimental.agents import create_pandas_dataframe_agent
+from langchain_core.messages import HumanMessage, AIMessage
 from src.rag_pipeline import get_llm, load_vectorstore, build_rag_chain
 
 STRUCTURED_KEYWORDS = [
@@ -35,23 +36,37 @@ def route_question(question: str) -> str:
     return "structured" if s_score > d_score else "document"
 
 
-def answer(question: str, pandas_agent, rag_chain) -> dict:
+def answer(question: str, pandas_agent, rag_chain, chat_history: list = None) -> dict:
+    if chat_history is None:
+        chat_history = []
+
     route = route_question(question)
     print(f"[Router → {route}]")
 
     if route == "structured":
-        result = pandas_agent.invoke(question)
+        if chat_history:
+            history_lines = []
+            for msg in chat_history[-6:]:
+                role = "Human" if isinstance(msg, HumanMessage) else "Assistant"
+                history_lines.append(f"{role}: {msg.content}")
+            augmented_question = (
+                f"Previous conversation:\n{chr(10).join(history_lines)}\n\n"
+                f"Current question: {question}"
+            )
+        else:
+            augmented_question = question
+        result = pandas_agent.invoke(augmented_question)
         return {
             "answer": result["output"],
             "route": "structured",
             "sources": ["superstore_clean.csv"],
         }
     else:
-        result = rag_chain.invoke(question)
+        result = rag_chain.invoke({"input": question, "chat_history": chat_history})
         sources = list({d.metadata.get("doc_name", "unknown")
-                        for d in result["source_documents"]})
+                        for d in result["context"]})
         return {
-            "answer": result["result"],
+            "answer": result["answer"],
             "route": "document",
             "sources": sources,
         }
@@ -74,16 +89,20 @@ def run_unified_cli():
     pandas_agent = build_pandas_agent(llm)
     vectorstore = load_vectorstore()
     rag_chain = build_rag_chain(vectorstore)
+    chat_history = []
 
     print("\nInsightForge CLI ready. Type 'quit' to exit.\n")
     while True:
         question = input("Question: ").strip()
         if question.lower() == "quit":
             break
-        result = answer(question, pandas_agent, rag_chain)
+        result = answer(question, pandas_agent, rag_chain, chat_history)
         print(f"\nAnswer: {result['answer']}")
         print(f"Route:   {result['route']}")
         print(f"Sources: {', '.join(result['sources'])}\n")
+        chat_history.append(HumanMessage(content=question))
+        chat_history.append(AIMessage(content=result["answer"]))
+        chat_history = chat_history[-10:]
 
 
 if __name__ == "__main__":

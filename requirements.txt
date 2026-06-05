@@ -1,11 +1,12 @@
-langchain>=0.2.0
+langchain>=1.0.0
+langchain-classic
+langchain-text-splitters
 langchain-openai
 langchain-community
 langchain-experimental
 langchain-chroma
 chromadb
 openai
-faiss-cpu
 pandas
 numpy
 matplotlib
@@ -18,3 +19,4 @@ openpyxl
 pillow
 jupyter
 tabulate
+pytest

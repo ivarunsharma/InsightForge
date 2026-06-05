@@ -1,10 +1,29 @@
+# ── Secrets — never commit ────────────────────────────────────────────────────
 .env
-venv/
+*.env
+.env.*
+secrets/
+
+# ── Generated artefacts ───────────────────────────────────────────────────────
 chroma_db/
 __pycache__/
 *.pyc
-.DS_Store
+*.pyo
+*.pyd
 *.egg-info/
 .ipynb_checkpoints/
+
+# ── Local environments ────────────────────────────────────────────────────────
+venv/
+.venv/
+
+# ── OS / editor noise ─────────────────────────────────────────────────────────
+.DS_Store
+.vscode/
+.idea/
+*.swp
+
+# ── Project-specific ─────────────────────────────────────────────────────────
 CLAUDE.md
 docs/*
+interview_prep/

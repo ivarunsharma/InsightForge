@@ -57,6 +57,9 @@ def load_and_clean(input_path="data/superstore_messy.csv",
     # 11. Strip whitespace from Customer Name
     df["Customer Name"] = df["Customer Name"].str.strip()
 
+    # 12. Final dedup pass — earlier cleaning steps can create new effective duplicates
+    df = df.drop_duplicates()
+
     after = len(df)
     print(f"Cleaned: {after} rows (removed {before - after})")
     print(f"\nRegion distribution:\n{df['Region'].value_counts()}")
