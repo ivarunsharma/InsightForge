@@ -1,8 +1,26 @@
+import hashlib
+import os
 import pandas as pd
+
+
+def _file_hash(path: str) -> str:
+    h = hashlib.md5()
+    with open(path, "rb") as f:
+        for chunk in iter(lambda: f.read(8192), b""):
+            h.update(chunk)
+    return h.hexdigest()
 
 
 def load_and_clean(input_path="data/superstore_messy.csv",
                    output_path="data/superstore_clean.csv"):
+
+    hash_path = output_path + ".hash"
+    current_hash = _file_hash(input_path)
+    if os.path.exists(output_path) and os.path.exists(hash_path):
+        with open(hash_path) as f:
+            if f.read().strip() == current_hash:
+                print("Source unchanged — loading cached clean CSV")
+                return pd.read_csv(output_path)
 
     df = pd.read_csv(input_path, encoding="latin1")
     before = len(df)
@@ -23,10 +41,10 @@ def load_and_clean(input_path="data/superstore_messy.csv",
     # 3. Parse mixed date formats: original data is MM/DD/YYYY, corruption script injected
     #    DD/MM/YY for 20% of rows. Two-pass approach handles both without dropping rows.
     def _parse_dates(col):
-        parsed = pd.to_datetime(col, dayfirst=False, errors="coerce")
+        parsed = pd.to_datetime(col, format="%m/%d/%Y", errors="coerce")
         nat_mask = parsed.isna()
         if nat_mask.any():
-            parsed[nat_mask] = pd.to_datetime(col[nat_mask], dayfirst=True, errors="coerce")
+            parsed[nat_mask] = pd.to_datetime(col[nat_mask], format="%d/%m/%y", errors="coerce")
         return parsed
 
     df["Order Date"] = _parse_dates(df["Order Date"])
@@ -67,6 +85,8 @@ def load_and_clean(input_path="data/superstore_messy.csv",
     print(f"Profit dtype: {df['Profit'].dtype}")
 
     df.to_csv(output_path, index=False)
+    with open(hash_path, "w") as f:
+        f.write(current_hash)
     print(f"\nSaved: {output_path}")
     return df
 

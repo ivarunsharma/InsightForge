@@ -87,9 +87,9 @@ def load_vectorstore():
     return vectorstore
 
 
-def build_rag_chain(vectorstore):
+def build_rag_chain(vectorstore, k: int = 5):
     llm = get_llm()
-    retriever = vectorstore.as_retriever(search_kwargs={"k": 5})
+    retriever = vectorstore.as_retriever(search_kwargs={"k": k})
     history_aware_retriever = create_history_aware_retriever(
         llm, retriever, CONTEXTUALIZE_Q_PROMPT
     )
@@ -117,7 +117,17 @@ def run_rag_cli():
             break
         result = chain.invoke({"input": question, "chat_history": chat_history})
         answer_text = result["answer"]
-        sources = list({d.metadata.get("doc_name", "unknown") for d in result["context"]})
+        pages_by_doc = {}
+        for d in result["context"]:
+            name = d.metadata.get("doc_name", "unknown")
+            page = d.metadata.get("page")
+            pages_by_doc.setdefault(name, set())
+            if page is not None:
+                pages_by_doc[name].add(page + 1)
+        sources = [
+            f"{name} (p. {', '.join(str(p) for p in sorted(pages))})" if pages else name
+            for name, pages in pages_by_doc.items()
+        ]
         print(f"\nAnswer: {answer_text}")
         print(f"Sources: {', '.join(sources)}\n")
         chat_history.append(HumanMessage(content=question))

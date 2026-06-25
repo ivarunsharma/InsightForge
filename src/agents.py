@@ -1,21 +1,21 @@
 import pandas as pd
+from collections import defaultdict
 from langchain_experimental.agents import create_pandas_dataframe_agent
-from langchain_core.messages import HumanMessage, AIMessage
+from langchain_core.messages import HumanMessage, AIMessage, SystemMessage
 from src.rag_pipeline import get_llm, load_vectorstore, build_rag_chain
 
-STRUCTURED_KEYWORDS = [
-    "total", "sum", "average", "mean", "count", "how many", "number of",
-    "highest", "lowest", "most", "least", "top", "bottom", "best", "worst",
-    "revenue", "sales", "profit", "margin", "discount",
-    "compare", "trend", "growth", "change", "percentage",
-    "by region", "by category", "by segment", "per", "in 2017", "in 2016",
-]
+ROUTER_SYSTEM = """You are a router for a business intelligence assistant.
+Classify the user's question into exactly one of two categories:
 
-DOCUMENT_KEYWORDS = [
-    "report", "said", "mentioned", "discussed", "board", "meeting",
-    "contract", "supplier", "feedback", "memo", "presentation",
-    "recommendation", "strategy", "what did", "according to",
-]
+structured — questions answerable from tabular sales data (CSV):
+  numbers, aggregations, totals, averages, comparisons, trends, ranks,
+  revenue, profit, discount, sales, customers, regions, categories, sub-categories
+
+document — questions answerable from written documents:
+  board meeting notes, annual reports, customer feedback, supplier contracts,
+  memos, strategies, what someone said or discussed, qualitative findings
+
+Reply with exactly one word: structured  or  document"""
 
 
 def build_pandas_agent(llm, csv_path="data/superstore_clean.csv"):
@@ -29,19 +29,53 @@ def build_pandas_agent(llm, csv_path="data/superstore_clean.csv"):
     )
 
 
-def route_question(question: str) -> str:
-    q = question.lower()
-    s_score = sum(1 for kw in STRUCTURED_KEYWORDS if kw in q)
-    d_score = sum(1 for kw in DOCUMENT_KEYWORDS if kw in q)
-    return "structured" if s_score > d_score else "document"
+def _format_sources(context_docs) -> list[str]:
+    pages_by_doc = defaultdict(set)
+    for doc in context_docs:
+        name = doc.metadata.get("doc_name", "unknown")
+        page = doc.metadata.get("page")
+        if page is not None:
+            pages_by_doc[name].add(page + 1)  # PyPDFLoader is 0-indexed
+        else:
+            pages_by_doc.setdefault(name, set())
+    sources = []
+    for name, pages in pages_by_doc.items():
+        if pages:
+            sources.append(f"{name} (p. {', '.join(str(p) for p in sorted(pages))})")
+        else:
+            sources.append(name)
+    return sources
 
 
-def answer(question: str, pandas_agent, rag_chain, chat_history: list = None) -> dict:
+_COMPLEX_WORDS = {"compare", "all", "across", "summarize", "list", "every",
+                  "each", "between", "vs", "versus", "difference", "similarities"}
+
+
+def _dynamic_k(question: str) -> int:
+    words = question.lower().split()
+    if len(words) > 20 or _COMPLEX_WORDS & set(words):
+        return 8
+    if len(words) >= 10:
+        return 5
+    return 3
+
+
+def classify_intent(question: str, llm) -> str:
+    response = llm.invoke([
+        SystemMessage(content=ROUTER_SYSTEM),
+        HumanMessage(content=question),
+    ])
+    label = response.content.strip().lower()
+    return "structured" if "structured" in label else "document"
+
+
+def answer(question: str, pandas_agent, vectorstore, llm, chat_history: list = None) -> dict:
     if chat_history is None:
         chat_history = []
 
-    route = route_question(question)
-    print(f"[Router → {route}]")
+    route = classify_intent(question, llm)
+    k = _dynamic_k(question)
+    print(f"[Router → {route}] [k={k}]")
 
     if route == "structured":
         if chat_history:
@@ -62,9 +96,9 @@ def answer(question: str, pandas_agent, rag_chain, chat_history: list = None) ->
             "sources": ["superstore_clean.csv"],
         }
     else:
+        rag_chain = build_rag_chain(vectorstore, k=k)
         result = rag_chain.invoke({"input": question, "chat_history": chat_history})
-        sources = list({d.metadata.get("doc_name", "unknown")
-                        for d in result["context"]})
+        sources = _format_sources(result["context"])
         return {
             "answer": result["answer"],
             "route": "document",
@@ -88,7 +122,6 @@ def run_unified_cli():
     llm = get_llm()
     pandas_agent = build_pandas_agent(llm)
     vectorstore = load_vectorstore()
-    rag_chain = build_rag_chain(vectorstore)
     chat_history = []
 
     print("\nInsightForge CLI ready. Type 'quit' to exit.\n")
@@ -96,7 +129,7 @@ def run_unified_cli():
         question = input("Question: ").strip()
         if question.lower() == "quit":
             break
-        result = answer(question, pandas_agent, rag_chain, chat_history)
+        result = answer(question, pandas_agent, vectorstore, llm, chat_history)
         print(f"\nAnswer: {result['answer']}")
         print(f"Route:   {result['route']}")
         print(f"Sources: {', '.join(result['sources'])}\n")

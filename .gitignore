@@ -12,6 +12,7 @@ __pycache__/
 *.pyd
 *.egg-info/
 .ipynb_checkpoints/
+*.hash
 
 # ── Local environments ────────────────────────────────────────────────────────
 venv/

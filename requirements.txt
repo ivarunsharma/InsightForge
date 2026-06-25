@@ -1,22 +1,43 @@
-langchain>=1.0.0
-langchain-classic
-langchain-text-splitters
-langchain-openai
-langchain-community
-langchain-experimental
-langchain-chroma
-chromadb
-openai
-pandas
-numpy
-matplotlib
-streamlit
-python-dotenv
-pypdf
-python-docx
-docx2txt
-openpyxl
-pillow
-jupyter
-tabulate
-pytest
+# LangChain
+langchain==1.3.4
+langchain-classic==1.0.7
+langchain-chroma==1.1.0
+langchain-community==0.4.2
+langchain-core==1.4.0
+langchain-experimental==0.4.2
+langchain-openai==1.2.2
+langchain-text-splitters==1.1.2
+langsmith==0.3.45
+
+# LLM / Azure / OpenAI
+openai==2.41.0
+tiktoken==0.9.0
+
+# Vector store
+chromadb==1.5.9
+
+# UI
+streamlit==1.56.0
+
+# Data
+pandas==3.0.2
+numpy==2.4.3
+matplotlib==3.10.9
+openpyxl==3.1.5
+tabulate==0.10.0
+
+# Document loaders
+pypdf==6.10.0
+python-docx==1.2.0
+docx2txt==0.9
+pillow==12.2.0
+
+# Utilities
+python-dotenv==1.2.2
+requests==2.32.5
+
+# Notebooks
+jupyter==1.1.1
+
+# Testing
+pytest==9.0.3

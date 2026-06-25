@@ -3,7 +3,7 @@ import streamlit as st
 from langchain_core.messages import HumanMessage, AIMessage
 from src.data_cleaner import load_and_clean
 from src.document_loader import load_all_documents, chunk_documents
-from src.rag_pipeline import build_vectorstore, load_vectorstore, build_rag_chain, get_llm
+from src.rag_pipeline import build_vectorstore, load_vectorstore, get_llm
 from src.agents import build_pandas_agent, answer
 from src.visualizations import (
     plot_sales_by_region, plot_profit_by_category,
@@ -29,22 +29,46 @@ load_css("static/style.css")
 CHROMA_DIR = "chroma_db"
 
 
-@st.cache_resource(show_spinner="Initializing InsightForge…")
-def initialize():
-    df = load_and_clean()
+@st.cache_resource(show_spinner=False)
+def _get_data():
+    return load_and_clean()
+
+
+@st.cache_resource(show_spinner=False)
+def _get_vectorstore():
     if not os.path.exists(CHROMA_DIR) or not os.listdir(CHROMA_DIR):
         docs = load_all_documents()
         chunks = chunk_documents(docs)
-        vs = build_vectorstore(chunks)
-    else:
-        vs = load_vectorstore()
-    llm = get_llm()
-    rag_chain = build_rag_chain(vs)
-    pandas_agent = build_pandas_agent(llm)
-    return df, llm, rag_chain, pandas_agent, vs
+        return build_vectorstore(chunks)
+    return load_vectorstore()
 
 
-df, llm, rag_chain, pandas_agent, vs = initialize()
+@st.cache_resource(show_spinner=False)
+def _get_llm():
+    return get_llm()
+
+
+@st.cache_resource(show_spinner=False)
+def _get_pandas_agent():
+    return build_pandas_agent(_get_llm())
+
+
+if not (os.path.exists(CHROMA_DIR) and os.listdir(CHROMA_DIR)):
+    with st.status("Building document index for the first time…", expanded=True) as _status:
+        st.write("Cleaning sales data…")
+        df = _get_data()
+        st.write("Loading and indexing documents…")
+        vs = _get_vectorstore()
+        st.write("Connecting to Azure OpenAI…")
+        llm = _get_llm()
+        pandas_agent = _get_pandas_agent()
+        _status.update(label="InsightForge ready!", state="complete", expanded=False)
+else:
+    with st.spinner("Loading InsightForge…"):
+        df = _get_data()
+        vs = _get_vectorstore()
+        llm = _get_llm()
+        pandas_agent = _get_pandas_agent()
 
 # ── Hero ──────────────────────────────────────────────────────────────────────
 st.markdown("""
@@ -121,9 +145,12 @@ with tab_chat:
     for msg in st.session_state.messages:
         with st.chat_message(msg["role"]):
             st.markdown(msg["content"])
+            if msg.get("error"):
+                with st.expander("Error details"):
+                    st.code(msg["error"])
             if msg.get("meta"):
                 route     = msg["meta"]["route"]
-                badge_cls = "badge-rag" if route == "rag" else "badge-pandas"
+                badge_cls = "badge-rag" if route == "document" else "badge-pandas"
                 sources   = ", ".join(msg["meta"]["sources"]) or "—"
                 with st.expander("Details"):
                     st.markdown(f'<span class="{badge_cls}">{route.upper()}</span>', unsafe_allow_html=True)
@@ -134,16 +161,22 @@ if question := st.chat_input("Ask about sales, profit, regions, board meetings�
     st.session_state.messages.append({"role": "user", "content": question})
 
     with st.spinner("Thinking…"):
-        result = answer(question, pandas_agent, rag_chain, st.session_state.chat_history)
-
-    st.session_state.messages.append({
-        "role":    "assistant",
-        "content": result["answer"],
-        "meta":    {"route": result["route"], "sources": result["sources"]},
-    })
-    st.session_state.chat_history.append(HumanMessage(content=question))
-    st.session_state.chat_history.append(AIMessage(content=result["answer"]))
-    st.session_state.chat_history = st.session_state.chat_history[-10:]
+        try:
+            result = answer(question, pandas_agent, vs, llm, st.session_state.chat_history)
+            st.session_state.messages.append({
+                "role":    "assistant",
+                "content": result["answer"],
+                "meta":    {"route": result["route"], "sources": result["sources"]},
+            })
+            st.session_state.chat_history.append(HumanMessage(content=question))
+            st.session_state.chat_history.append(AIMessage(content=result["answer"]))
+            st.session_state.chat_history = st.session_state.chat_history[-10:]
+        except Exception as e:
+            st.session_state.messages.append({
+                "role":    "assistant",
+                "content": "Sorry, I couldn't process that question. Please try rephrasing or ask something else.",
+                "error":   str(e),
+            })
     st.rerun()
 
 # ── Dashboard ─────────────────────────────────────────────────────────────────
