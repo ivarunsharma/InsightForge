@@ -26,5 +26,6 @@ venv/
 
 # ── Project-specific ─────────────────────────────────────────────────────────
 CLAUDE.md
+TODO.md
 docs/*
 interview_prep/
