@@ -9,8 +9,11 @@ An AI-powered BI assistant for TechRetail Corporation. Ask any question in plain
 - **Structured questions** ("What is total profit by region?") → Pandas DataFrame Agent runs real Python code on 7,010 rows of cleaned sales data
 - **Document questions** ("What did the board discuss about Q4?") → RAG chain searches 407 indexed chunks from 14 business documents (TXT, DOCX, PDF)
 - **Conversational follow-ups** work naturally — ask "What about the East?" after a prior question and the system understands the context
-- A **keyword router** automatically decides which engine to use — no manual selection required
-- A **Streamlit UI** with live charts, sidebar metrics, and a chat interface
+- An **LLM-based intent classifier** automatically decides which engine to use — no manual selection required
+- **Dynamic retrieval** adjusts how many document chunks are fetched based on query complexity
+- **Page-level source citations** show exactly which document and page number each answer came from
+- A **Streamlit UI** with live charts, sidebar metrics, chat interface, and a first-run progress bar
+- **Graceful error handling** in chat — user-friendly messages with collapsible error details
 
 ---
 
@@ -24,10 +27,10 @@ InsightForge/
 ├── requirements.txt
 ├── .env.example              ← copy to .env and fill in your Azure keys
 ├── src/
-│   ├── data_cleaner.py       ← cleans superstore_messy.csv → superstore_clean.csv
+│   ├── data_cleaner.py       ← cleans superstore_messy.csv → superstore_clean.csv (hash-skips if unchanged)
 │   ├── document_loader.py    ← loads TXT/DOCX/PDF, chunks into 800-char pieces
 │   ├── rag_pipeline.py       ← Chroma vector store + LCEL RAG chain
-│   ├── agents.py             ← Pandas agent + keyword router + conversation memory
+│   ├── agents.py             ← Pandas agent + LLM intent classifier + dynamic k + conversation memory
 │   └── visualizations.py    ← 5 chart functions + auto-insights
 ├── data/                     ← raw + clean CSV, TXT, DOCX, PDF documents
 └── chroma_db/                ← Chroma vector store (built on first run, gitignored)
@@ -76,7 +79,7 @@ source ../venv/bin/activate
 streamlit run app.py
 ```
 
-Opens at `http://localhost:8501`. On first run, the app builds the Chroma index (~1–3 min). Subsequent runs load from disk instantly.
+Opens at `http://localhost:8501`. On first run, a step-by-step progress bar tracks index building (~1–3 min). Subsequent runs load from disk instantly.
 
 ### Option B — Docker
 
@@ -84,7 +87,7 @@ Opens at `http://localhost:8501`. On first run, the app builds the Chroma index 
 docker compose up --build
 ```
 
-Opens at `http://localhost:8501`. The `chroma_db/` and `data/` directories are volume-mounted so the pre-built index is reused inside the container.
+Opens at `http://localhost:8501`. The `chroma_db/` and `data/` directories are volume-mounted so the pre-built index is reused inside the container. A Docker healthcheck monitors app readiness at `/_stcore/health`.
 
 ### Option C — CLI only (no UI)
 
